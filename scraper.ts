@@ -191,13 +191,16 @@ function findElement(elements: Element[], text: string, shouldSelectRightmostEle
         } while (rightElement !== undefined && rightElements.length < 5);  // up to 5 elements
     }
 
-    // Chose the best match (if any matches were found).
+    // Chose the best match (if any matches were found).  Note that trimming is performed here so
+    // that text such as "  Plan" is matched in preference to text such as "plan)" (when looking
+    // for elements that match "Plan").  For an example of this problem see "200/303/07" in
+    // "https://www.walkerville.sa.gov.au/webdata/resources/files/DA%20Register%20-%202007.pdf".
 
     if (matches.length > 0) {
         let bestMatch = matches.reduce((previous, current) =>
             (previous === undefined ||
-            previous.threshold < current.threshold ||
-            (previous.threshold === current.threshold && Math.abs(previous.text.length - condensedText.length) <= Math.abs(current.text.length - condensedText.length)) ? current : previous), undefined);
+            current.threshold < previous.threshold ||
+            (current.threshold === previous.threshold && Math.abs(current.text.trim().length - condensedText.length) < Math.abs(previous.text.trim().length - condensedText.length)) ? current : previous), undefined);
         return shouldSelectRightmostElement ? bestMatch.rightElement : bestMatch.leftElement;
     }
 
@@ -246,8 +249,8 @@ function findStartElements(elements: Element[]) {
         if (matches.length > 0) {
             let bestMatch = matches.reduce((previous, current) =>
                 (previous === undefined ||
-                previous.threshold < current.threshold ||
-                (previous.threshold === current.threshold && Math.abs(previous.text.length - "ApplicationNo".length) <= Math.abs(current.text.length - "ApplicationNo".length)) ? current : previous), undefined);
+                current.threshold < previous.threshold ||
+                (current.threshold === previous.threshold && Math.abs(current.text.trim().length - "ApplicationNo".length) < Math.abs(previous.text.trim().length - "ApplicationNo".length)) ? current : previous), undefined);
             startElements.push(bestMatch.element);
         }
     }
